@@ -9,7 +9,7 @@ import type { SentenceResponse, Response } from "./types";
  * @returns SentenceResponse
  * @throws {Error} The error
  **/
-async function getSentence(): Promise<SentenceResponse> {
+export async function getSentence(): Promise<SentenceResponse> {
   try {
     const res = await fetch(SENTENCE_API);
     const data: SentenceResponse = await res.json();
@@ -19,27 +19,22 @@ async function getSentence(): Promise<SentenceResponse> {
   }
 }
 
-async function getImageBySentence(cookie: string): Promise<Response> {
+async function getImageBySentence(
+  cookie: string,
+  sentence: SentenceResponse
+): Promise<Response> {
   const bingImageCreator = new BingImageCreator({
     cookie: cookie,
   });
 
-  const res = await getSentence();
-  console.log("getSentence Result: ", res);
-
-  const prompt = `${res.content}, textless`;
-  try {
-    const images = await bingImageCreator.createImage(prompt);
-    return {
-      images,
-      content: res.content,
-      origin: res.origin,
-      author: res.author,
-      category: res.category,
-    };
-  } catch (error) {
-    throw new Error("Bing Image create failed: ", error);
-  }
+  const images = await bingImageCreator.createImage(sentence.content);
+  return {
+    images,
+    content: sentence.content,
+    origin: sentence.origin,
+    author: sentence.author,
+    category: sentence.category,
+  };
 }
 
 export { getImageBySentence };
