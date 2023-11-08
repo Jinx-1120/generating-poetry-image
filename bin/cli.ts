@@ -7,56 +7,61 @@ import { promisify } from "util";
 
 const pipeline = promisify(stream.pipeline);
 
-const prompts = [
-  // Oil painting style:
-  'Inspired by the Chinese ancient poem "$title$", create an oil painting-style artwork that reflects the poetic charm and characters.',
-  // Realistic style:
-  'Using the Chinese ancient poem "$title$" as the source of inspiration, draw a realistic-style picture that highlights the scene details and atmosphere.',
-  // Cyberpunk style:
-  'Combine the Chinese ancient poem "$title$" with cyberpunk elements to design a unique image blending tradition and sci-fi.',
-];
+// const prompts = [
+//   // Oil painting style:
+//   'Inspired by the Chinese ancient poem "$title$", create an oil painting-style artwork that reflects the poetic charm and characters.',
+//   // Realistic style:
+//   'Using the Chinese ancient poem "$title$" as the source of inspiration, draw a realistic-style picture that highlights the scene details and atmosphere.',
+//   // Cyberpunk style:
+//   'Combine the Chinese ancient poem "$title$" with cyberpunk elements to design a unique image blending tradition and sci-fi.',
+// ];
+const prompt =
+  '请根据"$title$"这句诗对应的主题、意境、情感、艺术手法作为背景绘制图片';
 async function init() {
   const cwd = process.cwd();
 
   const argv = require("minimist")(process.argv.slice(2));
   const cookie = argv.cookie;
-  const sentence = await getSentence();
 
-  console.log("getSentence Result: ", sentence);
-  const createImagePromises = prompts.map(async (prompt) => {
-    sentence.content = prompt.replace("$title$", sentence.content);
-    const res: Response = await getImageBySentence(cookie, sentence);
-    console.log("Create Successful: ", res);
+  const createImagePromises = Array(4)
+    .fill("")
+    .map(async () => {
+      const sentence = await getSentence();
 
-    const outputPath = path.join(cwd, "public");
+      console.log("getSentence Result: ", sentence);
+      sentence.content = prompt.replace("$title$", sentence.content);
+      const res: Response = await getImageBySentence(cookie, sentence);
+      console.log("Create Successful: ", res);
 
-    const imagesPath = path.join(outputPath, "images");
-    if (!fs.existsSync(imagesPath)) {
-      fs.mkdirSync(imagesPath);
-    }
+      const outputPath = path.join(cwd, "public");
 
-    const imagesFolderName = Date.now().toString();
-    const imagesFolderPath = path.join(imagesPath, imagesFolderName);
-    if (!fs.existsSync(imagesFolderPath)) {
-      fs.mkdirSync(imagesFolderPath);
-    }
-    await writeContent(res, imagesFolderName);
-    console.log("writeContent success: ", imagesFolderName);
+      const imagesPath = path.join(outputPath, "images");
+      if (!fs.existsSync(imagesPath)) {
+        fs.mkdirSync(imagesPath);
+      }
 
-    const downImagePromises = res.images.map((image, index) => {
-      const imageFileName = `${index}.jpg`;
-      const imageFilePath = path.join(imagesFolderPath, imageFileName);
+      const imagesFolderName = Date.now().toString();
+      const imagesFolderPath = path.join(imagesPath, imagesFolderName);
+      if (!fs.existsSync(imagesFolderPath)) {
+        fs.mkdirSync(imagesFolderPath);
+      }
+      await writeContent(res, imagesFolderName);
+      console.log("writeContent success: ", imagesFolderName);
 
-      return fetch(image).then((res) => {
-        if (!res.ok) throw new Error(`unexpected response ${res.statusText}`);
-        // @ts-ignore
-        pipeline(res.body, fs.createWriteStream(imageFilePath)).catch((e) => {
-          console.error("Something went wrong while saving the image", e);
+      const downImagePromises = res.images.map((image, index) => {
+        const imageFileName = `${index}.jpg`;
+        const imageFilePath = path.join(imagesFolderPath, imageFileName);
+
+        return fetch(image).then((res) => {
+          if (!res.ok) throw new Error(`unexpected response ${res.statusText}`);
+          // @ts-ignore
+          pipeline(res.body, fs.createWriteStream(imageFilePath)).catch((e) => {
+            console.error("Something went wrong while saving the image", e);
+          });
         });
       });
+      return Promise.all(downImagePromises);
     });
-    return Promise.all(downImagePromises);
-  });
   await Promise.all(createImagePromises);
   console.log("createImages success");
   process.exit(0);
