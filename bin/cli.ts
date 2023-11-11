@@ -16,7 +16,8 @@ const pipeline = promisify(stream.pipeline);
 //   'Combine the Chinese ancient poem "$title$" with cyberpunk elements to design a unique image blending tradition and sci-fi.',
 // ];
 const prompt =
-  '请根据"$title$"这句诗对应的主题、意境、情感、艺术手法作为背景绘制图片';
+  '请根据给定的古诗句"$title$"创作一张插图，展示出诗句所描述的场景，并表现出诗句深层的主题含义。';
+// '请根据"$title$"这句诗对应的主题、意境、情感、艺术手法作为背景绘制图片';
 async function init() {
   const cwd = process.cwd();
 
