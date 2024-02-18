@@ -32,14 +32,15 @@ export class BingImageCreator {
     const url = `${BING_URL}/images/create?q=${encodedPrompt}&rt=3&FORM=GENCRE`;
 
     return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
       headers: {
-        cookie,
+        cookie: this._cookie,
         ...HEADERS,
       },
       body: formData,
-      method: "POST",
-      mode: "cors",
-      redirect: "manual", // set to manual to prevent redirect
+      redirect: "manual"
     }).then(async (res) => {
       if (res.ok) {
         // 200 is failed
