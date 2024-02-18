@@ -42,6 +42,7 @@ export class BingImageCreator {
       body: formData,
       redirect: "manual"
     }).then(async (res) => {
+      console.log(res)
       if (res.ok) {
         // 200 is failed
         throw new Error("Request failed");
